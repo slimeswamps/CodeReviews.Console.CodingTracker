@@ -51,13 +51,13 @@ Project from: [C# Academy](https://thecsharpacademy.com/)
 
   - Asking the user which record to update
  
-      <img width="978" height="206" alt="image" src="https://github.com/user-attachments/assets/aa3e790c-64c5-476b-8c8e-d4efdbec9300" />
+      <img width="991" height="217" alt="image" src="https://github.com/user-attachments/assets/4e43ef19-2fc8-4619-b803-c161e9162882" />
 
   - Asking the user what the new value is
   - Input validation to ensure everything is in the right format
   - Automatically updating the duration if the start/endtime has been updated
  
-      <img width="667" height="121" alt="image" src="https://github.com/user-attachments/assets/39f5d0e1-3e6b-4f03-9690-ed04614e3078" />
+      <img width="917" height="147" alt="image" src="https://github.com/user-attachments/assets/5fa7a268-b791-4eb6-ac60-baf52e1d75e7" />
 
 * Deleting records
   - Askinking the user which record to delete

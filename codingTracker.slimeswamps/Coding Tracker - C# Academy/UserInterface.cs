@@ -177,7 +177,7 @@ class UserInterface
         var records = db.GetRecords();
         var recordToUpdate = AnsiConsole.Prompt(
             new SelectionPrompt<Records>()
-            .Title("Which record would you like to update?")
+            .Title("Which [blue]record[/] would you like to [red]update[/]?")
             .PageSize(5)
             .UseConverter(r => $"ID: {r.trackerID} | Start Time: {r.startTime} | EndTime: {r.endTime} | Duration: {r.duration} | Date: {r.date}")
             .AddChoices(records)).trackerID ?? 0;
@@ -188,19 +188,19 @@ class UserInterface
                 DateTime endTime = Convert.ToDateTime(db.GetRecord(recordToUpdate).endTime);
         
                 DateTime updatedStartTime;
-                string updatedStartTimeString = AnsiConsole.Ask<string>("Please enter the updated start time (e.g. 09:10): ");
+                string updatedStartTimeString = AnsiConsole.Ask<string>("Please enter the updated [blue]start[/] time (e.g. 09:10): ");
                 while (!DateTime.TryParseExact(updatedStartTimeString, "HH:mm", new CultureInfo("en-GB"), DateTimeStyles.None, out updatedStartTime) || updatedStartTime > endTime)
                 {
-                    updatedStartTimeString = AnsiConsole.Ask<string>("Invalid time format. Please enter the updated start time(e.g. 09:10): ");
+                    updatedStartTimeString = AnsiConsole.Ask<string>("Invalid time format. Please enter the updated [blue]start[/] time(e.g. 09:10): ");
                 }
 
                 var timeDifference = endTime - updatedStartTime;
                 var duration = string.Format("{0:00}:{1:00}", timeDifference.Hours, timeDifference.Minutes);
 
                 var confirmupdate = AnsiConsole.Confirm(@$"Would you like to update record {recordToUpdate} to:
-                    Start Time: {updatedStartTimeString}
-                    End Time: {endTime.ToString("HH:mm")}
-                    Duration: {duration}");
+                    [blue]Start Time[/]: {updatedStartTimeString}
+                    [green]End Time[/]: {endTime.ToString("HH:mm")}
+                    [teal]Duration[/]: {duration}");
 
                 if(confirmupdate)
                 {
@@ -218,19 +218,19 @@ class UserInterface
                 DateTime startTime = Convert.ToDateTime(db.GetRecord(recordToUpdate).startTime);
 
                 DateTime updatedEndTime;
-                string updatedEndTimeString = AnsiConsole.Ask<string>("Please enter the updated end time (e.g. 09:10): ");
+                string updatedEndTimeString = AnsiConsole.Ask<string>("Please enter the updated [green]end[/] time (e.g. 09:10): ");
                 while (!DateTime.TryParseExact(updatedEndTimeString, "HH:mm", new CultureInfo("en-GB"), DateTimeStyles.None, out updatedEndTime) || startTime > updatedEndTime)
                 {
-                    updatedEndTimeString = AnsiConsole.Ask<string>("Invalid time format. Please enter the updated end time(e.g. 09:10): ");
+                    updatedEndTimeString = AnsiConsole.Ask<string>("Invalid time format. Please enter the updated [green]end[/] time(e.g. 09:10): ");
                 }
 
                 timeDifference = updatedEndTime - startTime;
                 duration = string.Format("{0:00}:{1:00}", timeDifference.Hours, timeDifference.Minutes);
 
                 confirmupdate = AnsiConsole.Confirm(@$"Would you like to update record {recordToUpdate} to:
-                    Start Time: {startTime.ToString("HH:mm")}
-                    End Time: {updatedEndTimeString}
-                    Duration: {duration}");
+                    [blue]Start Time[/]: {startTime.ToString("HH:mm")}
+                    [green]End Time[/]: {updatedEndTimeString}
+                    [teal]Duration[/]: {duration}");
 
                 if (confirmupdate)
                 {
@@ -245,14 +245,14 @@ class UserInterface
                 break;
 
             case tableFields.date:
-                var updatedDateString = AnsiConsole.Ask<string>("Please enter the updated date(e.g. 02/06/2025): ");
+                var updatedDateString = AnsiConsole.Ask<string>("Please enter the updated [red]date[/] (e.g. 02/06/2025): ");
                 while (!DateTime.TryParseExact(updatedDateString, "dd/MM/yyyy", new CultureInfo("en-GB"), DateTimeStyles.None, out _))
                 {
-                    updatedDateString = AnsiConsole.Ask<string>("Invalid date format. Please enter the updated date(e.g. 02/06/2025): ");
+                    updatedDateString = AnsiConsole.Ask<string>("Invalid date format. Please enter the updated [red]date[/] (e.g. 02/06/2025): ");
                 }
 
-                confirmupdate = AnsiConsole.Confirm(@$"Would you like to update record {recordToUpdate} to:
-                    Date: {updatedDateString}");
+                confirmupdate = AnsiConsole.Confirm(@$"Would you like to update [yellow]record[/] {recordToUpdate} to:
+                    [red]Date[/]: {updatedDateString}");
 
                 if (confirmupdate)
                 {
@@ -274,7 +274,7 @@ class UserInterface
         var records = db.GetRecords();
         var recordToDelete = AnsiConsole.Prompt(
             new SelectionPrompt<Records>()
-            .Title("Which record would you like to delete?")
+            .Title("Which record would you like to [bold red]delete[/]?")
             .PageSize(5)
             .UseConverter(r => $"ID: {r.trackerID} | Start Time: {r.startTime} | EndTime: {r.endTime} | Duration: {r.duration} | Date: {r.date}")
             .AddChoices(records)).trackerID ?? 0;

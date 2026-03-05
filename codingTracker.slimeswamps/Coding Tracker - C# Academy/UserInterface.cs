@@ -1,0 +1,294 @@
+﻿using Spectre.Console;
+using System.Diagnostics.Metrics;
+using System.Globalization;
+using System.Numerics;
+using static CodingTracker.Enums;
+
+namespace CodingTracker;
+
+class UserInterface
+{
+    DatabaseConnector db = new DatabaseConnector();
+
+    internal void MainMenu()
+    {
+        bool tracking = true;
+        while (tracking)
+        {
+            AnsiConsole.MarkupLine("Welcome to the [bold red]Coding Tracker[/]\n");
+            var option = AnsiConsole.Prompt(
+                new SelectionPrompt<MenuOptions>()
+                .Title("[green]What do you want to do?[/]")
+                .AddChoices(Enum.GetValues<MenuOptions>())
+                );
+
+            switch (option)
+            {
+                case MenuOptions.ViewRecords:
+                    ViewRecords();
+                    break;
+
+                case MenuOptions.AddRecord:
+                    AddRecord();
+                    break;
+
+                case MenuOptions.UpdateRecord:
+                    UpdateRecord();
+                    break;
+
+                case MenuOptions.DeleteRecord: DeleteRecord();
+                    DeleteRecord();
+                    break;
+
+                case MenuOptions.CloseApplication:
+                    Environment.Exit(0);
+                    break;
+
+            }
+        }
+        
+    }
+    
+    internal void ViewRecords()
+    {
+        string filterInput = AnsiConsole.Prompt(
+            new SelectionPrompt<string>()
+                .Title("What period would you like to see [yellow]results[/] from?")
+                .AddChoices("All time","Last week","Last month","Last year","Custom"));
+
+        string filterStartDate = "01/01/0001";
+        string filterEndDate = DateTime.Now.ToShortDateString();
+        switch(filterInput)
+        {
+            case "Last week":
+                filterStartDate = DateTime.Now.AddDays(-7).ToShortDateString();
+                break;
+
+            case "Last month":
+                filterStartDate = DateTime.Now.AddMonths(-1).ToShortDateString();
+                break;
+
+            case "Last year":
+                filterStartDate = DateTime.Now.AddYears(-1).ToShortDateString();
+                break;
+
+            case "Custom":
+                filterStartDate = AnsiConsole.Ask<string>("Enter what date would you like to start filtering from (e.g. 02/06/2025): ");
+                while (!DateTime.TryParseExact(filterStartDate, "dd/MM/yyyy", new CultureInfo("en-GB"), DateTimeStyles.None, out _))
+                {
+                    filterStartDate = AnsiConsole.Ask<string>("Invalid time format. Enter what date would you like to start filtering from (e.g. 02/06/2025): ");
+                }
+
+                filterEndDate = AnsiConsole.Ask<string>("Enter what date you would like to end filtering from (e.g. 02/06/2025): ", filterEndDate);
+                while (!DateTime.TryParseExact(filterEndDate, "dd/MM/yyyy", new CultureInfo("en-GB"), DateTimeStyles.None, out _))
+                {
+                    filterEndDate = AnsiConsole.Ask<string>("Invalid time format. Enter what date you would like to end filtering from (e.g. 02/06/2025): ", filterEndDate);
+                }
+                break;
+        }
+
+        var records = db.GetRecords();
+
+        var table = new Table();
+        table.AddColumn("ID");
+        table.AddColumn("Start time");
+        table.AddColumn("End time");
+        table.AddColumn("Duration");
+        table.AddColumn("Date");
+        TimeSpan totalDurationTime = new TimeSpan();
+        foreach (Records record in records)
+        {
+            if (Convert.ToDateTime(record.date) >= Convert.ToDateTime(filterStartDate) && Convert.ToDateTime(record.date) <= Convert.ToDateTime(filterEndDate))
+            {
+                table.AddRow(record.trackerID.ToString(), record.startTime, record.endTime, record.duration, record.date);
+                totalDurationTime += TimeSpan.Parse(record.duration);
+            }
+        }
+
+        AnsiConsole.Write(table);
+        AnsiConsole.MarkupLine("The total duration of coding time is [DarkSeaGreen]{0} days {1} hours {2} minutes[/]",totalDurationTime.Days ,totalDurationTime.Hours,totalDurationTime.Minutes);
+
+
+        AnsiConsole.MarkupLine("\nPress [green]ENTER[/] return to main menu");
+        Console.ReadLine();
+        AnsiConsole.Clear();
+    }
+
+    internal void AddRecord()
+    {
+        DateTime currentDateTime = DateTime.Now;
+        string currentTime = currentDateTime.ToShortTimeString();
+        string currentDate = currentDateTime.ToShortDateString();
+
+        DateTime inputedStartTime;
+        DateTime inputedEndTime;
+
+        string inputedStartTimeString = AnsiConsole.Ask<string>("Enter the [blue]start[/] time (e.g. 09:10): ",currentTime);
+        while (!DateTime.TryParseExact(inputedStartTimeString, "HH:mm", new CultureInfo("en-GB"), DateTimeStyles.None, out inputedStartTime))
+        {
+            inputedStartTimeString = AnsiConsole.Ask<string>("Invalid time format. Please enter the [blue]start[/] time (e.g. 09:10): ", currentTime);
+        }
+        
+        string inputedEndTimeString = AnsiConsole.Ask<string>("\nEnter the [green]end[/] time (e.g. 09:10): ", currentTime);
+        while (!(DateTime.TryParseExact(inputedEndTimeString, "HH:mm", new CultureInfo("en-GB"),DateTimeStyles.None, out inputedEndTime)) || inputedStartTime > inputedEndTime)
+        {
+            inputedEndTimeString = AnsiConsole.Ask<string>("Invalid time format. Please enter the [green]end[/] time (e.g. 09:10): ", currentTime);
+        }
+
+        string inputedDate = AnsiConsole.Ask<string>("\nEnter the [red]date[/]: ", currentDate);
+        while (!DateTime.TryParseExact(inputedDate, "dd/MM/yyyy", new CultureInfo("en-GB"), DateTimeStyles.None, out _)) 
+        {
+            inputedDate = AnsiConsole.Ask<string>("Invalid date format. Please enter the [red]date[/] (e.g. 02/06/2025): ", currentDate);
+        }
+
+        var timeDifference = inputedEndTime - inputedStartTime;
+
+        var duration = string.Format("{0:00}:{1:00}", timeDifference.Hours, timeDifference.Minutes);
+
+        var confimRecord =  AnsiConsole.Confirm(@$"Do you want to create a record where:
+            [blue]Start time[/]: {inputedStartTimeString}
+            [green]End time[/]: {inputedEndTimeString}
+            [teal]Duration[/]: {duration}
+            [red]Date[/]: {inputedDate}",
+            true);
+
+        if (confimRecord)
+        {
+            db.AddRecord(inputedStartTimeString, inputedEndTimeString, duration, inputedDate);
+        }
+        else
+        {
+            AnsiConsole.Clear();
+            return;
+        }
+
+        AnsiConsole.MarkupLine("New record [green]created[/]. Press [green]ENTER[/] to return to main menu");
+        Console.ReadKey();
+        AnsiConsole.Clear();
+    }
+
+    internal void UpdateRecord()
+    {
+        var fieldToUpdate = AnsiConsole.Prompt(
+            new SelectionPrompt<tableFields>()
+            .Title("What would you like to update?")
+            .AddChoices(Enum.GetValues<tableFields>().Where(f => f != tableFields.trackerID && f != tableFields.duration)));
+
+        var records = db.GetRecords();
+        var recordToUpdate = AnsiConsole.Prompt(
+            new SelectionPrompt<Records>()
+            .Title("Which record would you like to update?")
+            .PageSize(5)
+            .UseConverter(r => $"ID: {r.trackerID} | Start Time: {r.startTime} | EndTime: {r.endTime} | Duration: {r.duration} | Date: {r.date}")
+            .AddChoices(records)).trackerID ?? 0;
+
+        switch (fieldToUpdate)
+        {
+            case tableFields.startTime:
+                DateTime endTime = Convert.ToDateTime(db.GetRecord(recordToUpdate).endTime);
+        
+                DateTime updatedStartTime;
+                string updatedStartTimeString = AnsiConsole.Ask<string>("Please enter the updated start time (e.g. 09:10): ");
+                while (!DateTime.TryParseExact(updatedStartTimeString, "HH:mm", new CultureInfo("en-GB"), DateTimeStyles.None, out updatedStartTime) || updatedStartTime > endTime)
+                {
+                    updatedStartTimeString = AnsiConsole.Ask<string>("Invalid time format. Please enter the updated start time(e.g. 09:10): ");
+                }
+
+                var timeDifference = endTime - updatedStartTime;
+                var duration = string.Format("{0:00}:{1:00}", timeDifference.Hours, timeDifference.Minutes);
+
+                var confirmupdate = AnsiConsole.Confirm(@$"Would you like to update record {recordToUpdate} to:
+                    Start Time: {updatedStartTimeString}
+                    End Time: {endTime.ToString("HH:mm")}
+                    Duration: {duration}");
+
+                if(confirmupdate)
+                {
+                    db.UpdateRecord(Enums.tableFields.startTime, recordToUpdate, updatedStartTimeString);
+                    db.UpdateRecord(Enums.tableFields.duration, recordToUpdate, duration);
+                }
+                else
+                {
+                    AnsiConsole.Clear();
+                    return;
+                }
+                break;
+
+            case tableFields.endTime:
+                DateTime startTime = Convert.ToDateTime(db.GetRecord(recordToUpdate).startTime);
+
+                DateTime updatedEndTime;
+                string updatedEndTimeString = AnsiConsole.Ask<string>("Please enter the updated end time (e.g. 09:10): ");
+                while (!DateTime.TryParseExact(updatedEndTimeString, "HH:mm", new CultureInfo("en-GB"), DateTimeStyles.None, out updatedEndTime) || startTime > updatedEndTime)
+                {
+                    updatedEndTimeString = AnsiConsole.Ask<string>("Invalid time format. Please enter the updated end time(e.g. 09:10): ");
+                }
+
+                timeDifference = updatedEndTime - startTime;
+                duration = string.Format("{0:00}:{1:00}", timeDifference.Hours, timeDifference.Minutes);
+
+                confirmupdate = AnsiConsole.Confirm(@$"Would you like to update record {recordToUpdate} to:
+                    Start Time: {startTime.ToString("HH:mm")}
+                    End Time: {updatedEndTimeString}
+                    Duration: {duration}");
+
+                if (confirmupdate)
+                {
+                    db.UpdateRecord(Enums.tableFields.endTime, recordToUpdate, updatedEndTimeString);
+                    db.UpdateRecord(Enums.tableFields.duration, recordToUpdate, duration);
+                }
+                else
+                {
+                    AnsiConsole.Clear();
+                    return;
+                }
+                break;
+
+            case tableFields.date:
+                var updatedDateString = AnsiConsole.Ask<string>("Please enter the updated date(e.g. 02/06/2025): ");
+                while (!DateTime.TryParseExact(updatedDateString, "dd/MM/yyyy", new CultureInfo("en-GB"), DateTimeStyles.None, out _))
+                {
+                    updatedDateString = AnsiConsole.Ask<string>("Invalid date format. Please enter the updated date(e.g. 02/06/2025): ");
+                }
+
+                confirmupdate = AnsiConsole.Confirm(@$"Would you like to update record {recordToUpdate} to:
+                    Date: {updatedDateString}");
+
+                if (confirmupdate)
+                {
+                    db.UpdateRecord(Enums.tableFields.date, recordToUpdate, updatedDateString);
+                }
+                else
+                {
+                    AnsiConsole.Clear();
+                    return;
+                }
+
+                    break;
+        }
+        AnsiConsole.Clear();
+    }
+
+    internal void DeleteRecord()
+    {
+        var records = db.GetRecords();
+        var recordToDelete = AnsiConsole.Prompt(
+            new SelectionPrompt<Records>()
+            .Title("Which record would you like to delete?")
+            .PageSize(5)
+            .UseConverter(r => $"ID: {r.trackerID} | Start Time: {r.startTime} | EndTime: {r.endTime} | Duration: {r.duration} | Date: {r.date}")
+            .AddChoices(records)).trackerID ?? 0;
+
+        var confimDelete = AnsiConsole.Confirm($"Are you sure you would like to [bold red]delete[/] record {recordToDelete}");
+        if (confimDelete)
+        {
+            db.DeleteRecord(recordToDelete);
+        }
+        else
+        {
+            AnsiConsole.Clear();
+            return;
+        }
+        AnsiConsole.Clear() ;
+    }
+}

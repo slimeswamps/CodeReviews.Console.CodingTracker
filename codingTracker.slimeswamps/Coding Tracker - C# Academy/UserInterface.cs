@@ -1,7 +1,5 @@
 ﻿using Spectre.Console;
-using System.Diagnostics.Metrics;
 using System.Globalization;
-using System.Numerics;
 using static CodingTracker.Enums;
 
 namespace CodingTracker;

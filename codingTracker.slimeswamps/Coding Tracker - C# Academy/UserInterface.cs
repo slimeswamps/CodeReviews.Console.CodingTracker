@@ -1,4 +1,5 @@
 ﻿using Spectre.Console;
+using System.Diagnostics;
 using System.Globalization;
 using static CodingTracker.Enums;
 
@@ -24,6 +25,10 @@ class UserInterface
             {
                 case MenuOptions.ViewRecords:
                     ViewRecords();
+                    break;
+
+                case MenuOptions.Stopwatch:
+                    Stopwatch();
                     break;
 
                 case MenuOptions.AddRecord:
@@ -288,5 +293,75 @@ class UserInterface
             return;
         }
         AnsiConsole.Clear() ;
+    }
+
+    internal void Stopwatch()
+    {
+        DateTime startDateTime = DateTime.Now;
+        string date = startDateTime.ToShortDateString();
+        string startTime = startDateTime.ToShortTimeString();
+
+        string duration = StopwatchUI();
+
+        string endTime = DateTime.Now.ToShortTimeString();
+
+        AnsiConsole.MarkupLine(@$"Creating record:
+            [blue]Start time[/]: {startTime}
+            [green]End time[/]: {endTime}
+            [teal]Duration[/]: {duration}
+            [red]Date[/]: {date}");
+
+        db.AddRecord(startTime, endTime, duration, date);
+
+        AnsiConsole.MarkupLine("Press [green]ENTER[/] to return to main menu");
+        Console.ReadKey();
+        AnsiConsole.Clear();
+    }
+
+    internal string StopwatchUI()
+    {
+        Stopwatch stopWatch = new Stopwatch();
+        stopWatch.Start();
+
+        TimeSpan ts = stopWatch.Elapsed;
+        var table = new Table().BorderColor(Color.DarkGreen).Expand().Border(TableBorder.HeavyEdge);
+        table.AddColumn("[DeepPink2]Stopwatch[/]", r => r.Centered());
+        table.AddRow($"{ts.Hours:00} hours {ts.Minutes:00} minutes {ts.Seconds:00} seconds");
+
+        Console.CursorVisible = false;
+        var top = Console.CursorTop;
+
+        bool view = true;
+        while (view)
+        {
+            ts = stopWatch.Elapsed;
+            table.UpdateCell(0, 0, $"{ts.Hours:00} hours {ts.Minutes:00} minutes {ts.Seconds:00} seconds");
+            Console.SetCursorPosition(0, top);
+            AnsiConsole.Write(table);
+            AnsiConsole.MarkupLine("\nPress [green]ENTER[/] to stop the stopwatch");
+            if (Console.KeyAvailable)
+            {
+                var key = Console.ReadKey(true);
+                if (key.Key == ConsoleKey.Enter)
+                {
+                    stopWatch.Stop();
+                    string paused = AnsiConsole.Prompt(
+                        new SelectionPrompt<string>()
+                        .Title("[DarkOrange3_1]Stopwatch paused[/]")
+                        .AddChoices("Unpause", "End Stopwatch"));
+                    if (paused == "End Stopwatch")
+                    {
+                        return $"{ts.Hours:00}:{ts.Minutes:00}";
+                    }
+                    else
+                    {
+                        stopWatch.Start();
+                        Console.CursorVisible = false;
+                    }
+                }
+            }
+        }
+        Console.CursorVisible = true;
+        return $"{ts.Hours:00}:{ts.Minutes:00}";
     }
 }

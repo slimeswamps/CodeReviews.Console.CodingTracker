@@ -5,6 +5,7 @@ internal class Enums
     internal enum MenuOptions
     {
         ViewRecords,
+        Stopwatch,
         AddRecord,
         UpdateRecord,
         DeleteRecord,

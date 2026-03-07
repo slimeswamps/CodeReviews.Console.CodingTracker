@@ -101,10 +101,10 @@ class UserInterface
         TimeSpan totalDurationTime = new TimeSpan();
         foreach (Records record in records)
         {
-            if (Convert.ToDateTime(record.date) >= Convert.ToDateTime(filterStartDate) && Convert.ToDateTime(record.date) <= Convert.ToDateTime(filterEndDate))
+            if (Convert.ToDateTime(record.Date) >= Convert.ToDateTime(filterStartDate) && Convert.ToDateTime(record.Date) <= Convert.ToDateTime(filterEndDate))
             {
-                table.AddRow(record.trackerID.ToString(), record.startTime, record.endTime, record.duration, record.date);
-                totalDurationTime += TimeSpan.Parse(record.duration);
+                table.AddRow(record.TrackerID.ToString(), record.StartTime, record.EndTime, record.Duration, record.Date);
+                totalDurationTime += TimeSpan.Parse(record.Duration);
             }
         }
 
@@ -182,13 +182,13 @@ class UserInterface
             new SelectionPrompt<Records>()
             .Title("Which [blue]record[/] would you like to [red]update[/]?")
             .PageSize(5)
-            .UseConverter(r => $"ID: {r.trackerID} | Start Time: {r.startTime} | EndTime: {r.endTime} | Duration: {r.duration} | Date: {r.date}")
-            .AddChoices(records)).trackerID ?? 0;
+            .UseConverter(r => $"ID: {r.TrackerID} | Start Time: {r.StartTime} | EndTime: {r.EndTime} | Duration: {r.Duration} | Date: {r.Date}")
+            .AddChoices(records)).TrackerID ?? 0;
 
         switch (fieldToUpdate)
         {
             case tableFields.startTime:
-                DateTime endTime = Convert.ToDateTime(db.GetRecord(recordToUpdate).endTime);
+                DateTime endTime = Convert.ToDateTime(db.GetRecord(recordToUpdate).EndTime);
         
                 DateTime updatedStartTime;
                 string updatedStartTimeString = AnsiConsole.Ask<string>("Please enter the updated [blue]start[/] time (e.g. 09:10): ");
@@ -218,7 +218,7 @@ class UserInterface
                 break;
 
             case tableFields.endTime:
-                DateTime startTime = Convert.ToDateTime(db.GetRecord(recordToUpdate).startTime);
+                DateTime startTime = Convert.ToDateTime(db.GetRecord(recordToUpdate).StartTime);
 
                 DateTime updatedEndTime;
                 string updatedEndTimeString = AnsiConsole.Ask<string>("Please enter the updated [green]end[/] time (e.g. 09:10): ");
@@ -279,8 +279,8 @@ class UserInterface
             new SelectionPrompt<Records>()
             .Title("Which record would you like to [bold red]delete[/]?")
             .PageSize(5)
-            .UseConverter(r => $"ID: {r.trackerID} | Start Time: {r.startTime} | EndTime: {r.endTime} | Duration: {r.duration} | Date: {r.date}")
-            .AddChoices(records)).trackerID ?? 0;
+            .UseConverter(r => $"ID: {r.TrackerID} | Start Time: {r.StartTime} | EndTime: {r.EndTime} | Duration: {r.Duration} | Date: {r.Date}")
+            .AddChoices(records)).TrackerID ?? 0;
 
         var confimDelete = AnsiConsole.Confirm($"Are you sure you would like to [bold red]delete[/] record {recordToDelete}");
         if (confimDelete)
